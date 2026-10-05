@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Calorie Tracker">
+    <meta name="theme-color" content="#4CAF50">
+    <title>Calorie Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4CAF50;
+            --danger: #FF5722;
+            --bg: #f5f5f5;
+            --card: #ffffff;
+            --text: #333;
+            --muted: #888;
+            --border: #e0e0e0;
+            --shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, #4CAF50, #2e7d32);
+            color: white;
+            padding: 20px 20px calc(20px + env(safe-area-inset-top, 0px));
+            padding-top: calc(20px + env(safe-area-inset-top, 0px));
+            text-align: center;
+        }
+
+        header h1 { font-size: 22px; margin-bottom: 4px; }
+        .date { font-size: 13px; opacity: 0.85; }
+
+        /* ── Tabs ── */
+        .tabs {
+            display: flex;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px 0;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--muted);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* ── Tab Content ── */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Summary Cards ── */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 14px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 14px 10px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .card.net {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .card-label {
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .card.net .card-label,
+        .card.net .card-unit { color: rgba(255,255,255,0.8); }
+
+        .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .card.net .card-value { color: white; }
+        .card-unit { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+        /* ── Section ── */
+        .section {
+            background: var(--card);
+            margin: 0 14px 14px;
+            padding: 18px;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .section h2 {
+            font-size: 17px;
+            margin-bottom: 14px;
+        }
+
+        /* ── Forms ── */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        input, select {
+            padding: 13px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+
+        .btn {
+            padding: 13px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn:active { opacity: 0.85; transform: scale(0.98); }
+
+        .btn-primary { background: var(--primary); color: white; }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 6px;
+            color: var(--danger);
+            flex-shrink: 0;
+        }
+
+        /* ── Item List ── */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            gap: 10px;
+        }
+
+        .item-info { flex: 1; min-width: 0; }
+
+        .item-name {
+            font-weight: 600;
+            font-size: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item-detail { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .item-cal {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ── Weight ── */
+        .weight-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .weight-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 10px;
+        }
+
+        .weight-val {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .weight-date { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+        .weight-change {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 20px;
+            margin-right: 6px;
+        }
+
+        .weight-change.up { background: #fdecea; color: #c62828; }
+        .weight-change.down { background: #e8f5e9; color: #2e7d32; }
+
+        /* ── History ── */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-day {
+            padding: 14px;
+            background: var(--bg);
+            border-radius: 10px;
+        }
+
+        .history-date {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .history-meta {
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+
+        .hist-stat {
+            background: var(--card);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .hist-stat-label { font-size: 11px; color: var(--muted); }
+        .hist-stat-value { font-size: 15px; font-weight: 700; color: var(--primary); }
+
+        /* ── Empty State ── */
+        .empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--muted);
+            font-size: 15px;
+        }
+
+        .empty-icon { font-size: 40px; margin-bottom: 8px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 360px) {
+            .card-value { font-size: 22px; }
+            .summary-cards { gap: 6px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>🍎 Calorie Tracker</h1>
+        <p class="date" id="currentDate"></p>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="today">Today</button>
+        <button class="tab-btn" data-tab="weight">Weight</button>
+        <button class="tab-btn" data-tab="history">History</button>
+    </nav>
+
+    <!-- TODAY TAB -->
+    <div class="tab-content active" id="today-tab">
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-label">Consumed</div>
+                <div class="card-value" id="totalConsumed">0</div>
+                <div class="card-unit">kcal</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Burned</div>
+                <div class="card-value" id="totalBurned">0</div>
+                <div class="card-unit">kcal</div>
+            </div>
+            <div class="card net">
+                <div class="card-label">Net</div>
+                <div class="card-value" id="netCalories">0</div>
+                <div class="card-unit">kcal</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🍽️ Add Food</h2>
+            <form id="foodForm">
+                <input type="text" id="foodName" placeholder="Food name (e.g. Chicken rice)" required autocomplete="off">
+                <input type="number" id="foodCalories" placeholder="Calories (kcal)" required min="1" inputmode="numeric">
+                <button type="submit" class="btn btn-primary">+ Add Food</button>
+            </form>
+            <div id="foodList" class="item-list"></div>
+        </div>
+
+        <div class="section">
+            <h2>🏃 Add Exercise</h2>
+            <form id="exerciseForm">
+                <select id="exerciseType" required>
+                    <option value="">Select exercise type</option>
+                    <optgroup label="Cardio">
+                        <option value="running">Running (10 kcal/min)</option>
+                        <option value="walking">Walking (4 kcal/min)</option>
+                        <option value="cycling">Cycling (8 kcal/min)</option>
+                        <option value="swimming">Swimming (11 kcal/min)</option>
+                        <option value="hiit">HIIT (12 kcal/min)</option>
+                        <option value="jump_rope">Jump Rope (12 kcal/min)</option>
+                        <option value="rowing">Rowing (9 kcal/min)</option>
+                    </optgroup>
+                    <optgroup label="Sports">
+                        <option value="basketball">Basketball (8 kcal/min)</option>
+                        <option value="soccer">Soccer (9 kcal/min)</option>
+                        <option value="tennis">Tennis (7 kcal/min)</option>
+                        <option value="badminton">Badminton (7 kcal/min)</option>
+                        <option value="volleyball">Volleyball (5 kcal/min)</option>
+                        <option value="boxing">Boxing (11 kcal/min)</option>
+                    </optgroup>
+                    <optgroup label="Gym & Flexibility">
+                        <option value="weightlifting">Weight Lifting (6 kcal/min)</option>
+                        <option value="yoga">Yoga (3 kcal/min)</option>
+                        <option value="pilates">Pilates (4 kcal/min)</option>
+                        <option value="dancing">Dancing (6 kcal/min)</option>
+                        <option value="stretching">Stretching (2 kcal/min)</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="other">Other (5 kcal/min)</option>
+                    </optgroup>
+                </select>
+                <input type="number" id="exerciseDuration" placeholder="Duration (minutes)" required min="1" inputmode="numeric">
+                <button type="submit" class="btn btn-primary">+ Add Exercise</button>
+            </form>
+            <div id="exerciseList" class="item-list"></div>
+        </div>
+
+    </div>
+
+    <!-- WEIGHT TAB -->
+    <div class="tab-content" id="weight-tab">
+        <div class="section" style="margin-top:14px;">
+            <h2>⚖️ Update Weight</h2>
+            <form id="weightForm">
+                <input type="number" id="weightValue" placeholder="Your weight (kg)" required min="1" max="500" step="0.1" inputmode="decimal">
+                <button type="submit" class="btn btn-primary">Save Weight</button>
+            </form>
+            <div id="weightList" class="weight-list"></div>
+        </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div class="tab-content" id="history-tab">
+        <div class="section" style="margin-top:14px;">
+            <h2>📅 Past Days</h2>
+            <div id="historyList" class="history-list"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ── Calorie burn rates per minute ──────────────────────────────
+const BURN_RATE = {
+    running: 10, walking: 4, cycling: 8, swimming: 11, hiit: 12,
+    jump_rope: 12, rowing: 9, basketball: 8, soccer: 9, tennis: 7,
+    badminton: 7, volleyball: 5, boxing: 11, weightlifting: 6,
+    yoga: 3, pilates: 4, dancing: 6, stretching: 2, other: 5
+};
+
+// ── Helpers ────────────────────────────────────────────────────
+function todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+}
+
+function fmtTime(isoStr) {
+    return new Date(isoStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDate(isoStr) {
+    return new Date(isoStr).toLocaleDateString('en-US', {
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+    });
+}
+
+function cap(str) {
+    return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getDayData(key) {
+    return JSON.parse(localStorage.getItem(key)) || { foods: [], exercises: [] };
+}
+
+function saveDayData(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ── Init ───────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('currentDate').textContent =
+        new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    document.getElementById('foodForm').addEventListener('submit', onAddFood);
+    document.getElementById('exerciseForm').addEventListener('submit', onAddExercise);
+    document.getElementById('weightForm').addEventListener('submit', onAddWeight);
+
+    renderToday();
+});
+
+// ── Tab switching ──────────────────────────────────────────────
+function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === name + '-tab'));
+    if (name === 'weight') renderWeight();
+    if (name === 'history') renderHistory();
+}
+
+// ── Today ──────────────────────────────────────────────────────
+function renderToday() {
+    const data = getDayData(todayKey());
+
+    const consumed = data.foods.reduce((s, f) => s + f.calories, 0);
+    const burned   = data.exercises.reduce((s, e) => s + e.calories, 0);
+    document.getElementById('totalConsumed').textContent = consumed;
+    document.getElementById('totalBurned').textContent   = burned;
+    document.getElementById('netCalories').textContent   = consumed - burned;
+
+    const fl = document.getElementById('foodList');
+    if (data.foods.length === 0) {
+        fl.innerHTML = '<div class="empty"><div class="empty-icon">🍽️</div>No food added yet</div>';
+    } else {
+        fl.innerHTML = data.foods.map(f => `
+            <div class="item">
+                <div class="item-info">
+                    <div class="item-name">${escHtml(f.name)}</div>
+                    <div class="item-detail">${fmtTime(f.ts)}</div>
+                </div>
+                <div class="item-cal">${f.calories} kcal</div>
+                <button class="btn-delete" onclick="deleteFood(${f.id})" title="Delete">🗑</button>
+            </div>`).join('');
+    }
+
+    const el = document.getElementById('exerciseList');
+    if (data.exercises.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">🏃</div>No exercise added yet</div>';
+    } else {
+        el.innerHTML = data.exercises.map(e => `
+            <div class="item">
+                <div class="item-info">
+                    <div class="item-name">${cap(e.type)}</div>
+                    <div class="item-detail">${e.duration} min · ${fmtTime(e.ts)}</div>
+                </div>
+                <div class="item-cal">${e.calories} kcal</div>
+                <button class="btn-delete" onclick="deleteExercise(${e.id})" title="Delete">🗑</button>
+            </div>`).join('');
+    }
+}
+
+function onAddFood(e) {
+    e.preventDefault();
+    const name     = document.getElementById('foodName').value.trim();
+    const calories = parseInt(document.getElementById('foodCalories').value);
+    const key      = todayKey();
+    const data     = getDayData(key);
+    data.foods.push({ id: Date.now(), name, calories, ts: new Date().toISOString() });
+    saveDayData(key, data);
+    e.target.reset();
+    renderToday();
+}
+
+function onAddExercise(e) {
+    e.preventDefault();
+    const type     = document.getElementById('exerciseType').value;
+    const duration = parseInt(document.getElementById('exerciseDuration').value);
+    const calories = Math.round(duration * (BURN_RATE[type] || 5));
+    const key      = todayKey();
+    const data     = getDayData(key);
+    data.exercises.push({ id: Date.now(), type, duration, calories, ts: new Date().toISOString() });
+    saveDayData(key, data);
+    e.target.reset();
+    renderToday();
+}
+
+function deleteFood(id) {
+    const key  = todayKey();
+    const data = getDayData(key);
+    data.foods = data.foods.filter(f => f.id !== id);
+    saveDayData(key, data);
+    renderToday();
+}
+
+function deleteExercise(id) {
+    const key  = todayKey();
+    const data = getDayData(key);
+    data.exercises = data.exercises.filter(e => e.id !== id);
+    saveDayData(key, data);
+    renderToday();
+}
+
+// ── Weight ─────────────────────────────────────────────────────
+function onAddWeight(e) {
+    e.preventDefault();
+    const val     = parseFloat(document.getElementById('weightValue').value);
+    const weights = JSON.parse(localStorage.getItem('weights')) || [];
+    weights.push({ id: Date.now(), weight: val, ts: new Date().toISOString() });
+    localStorage.setItem('weights', JSON.stringify(weights));
+    e.target.reset();
+    renderWeight();
+}
+
+function deleteWeight(id) {
+    const weights = (JSON.parse(localStorage.getItem('weights')) || []).filter(w => w.id !== id);
+    localStorage.setItem('weights', JSON.stringify(weights));
+    renderWeight();
+}
+
+function renderWeight() {
+    const weights = (JSON.parse(localStorage.getItem('weights')) || [])
+        .sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+    const container = document.getElementById('weightList');
+
+    if (weights.length === 0) {
+        container.innerHTML = '<div class="empty"><div class="empty-icon">⚖️</div>No weight entries yet.<br>Record your first weigh-in above!</div>';
+        return;
+    }
+
+    container.innerHTML = weights.map((w, i) => {
+        let changeHTML = '';
+        if (i < weights.length - 1) {
+            const diff   = w.weight - weights[i + 1].weight;
+            const cls    = diff > 0 ? 'up' : 'down';
+            const symbol = diff > 0 ? '▲' : '▼';
+            changeHTML = `<span class="weight-change ${cls}">${symbol} ${Math.abs(diff).toFixed(1)} kg</span>`;
+        }
+        return `
+            <div class="weight-entry">
+                <div>
+                    <div class="weight-val">${w.weight} kg</div>
+                    <div class="weight-date">${fmtDate(w.ts)}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    ${changeHTML}
+                    <button class="btn-delete" onclick="deleteWeight(${w.id})" title="Delete">🗑</button>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ── History ────────────────────────────────────────────────────
+function renderHistory() {
+    const keys = Object.keys(localStorage)
+        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+        .sort((a, b) => b.localeCompare(a));
+
+    const container = document.getElementById('historyList');
+
+    if (keys.length === 0) {
+        container.innerHTML = '<div class="empty"><div class="empty-icon">📅</div>No history yet.<br>Start logging today!</div>';
+        return;
+    }
+
+    container.innerHTML = keys.map(key => {
+        const data     = getDayData(key);
+        const consumed = data.foods.reduce((s, f) => s + f.calories, 0);
+        const burned   = data.exercises.reduce((s, e) => s + e.calories, 0);
+        const net      = consumed - burned;
+
+        const dateLabel = new Date(key + 'T12:00:00').toLocaleDateString('en-US', {
+            weekday: 'long', month: 'short', day: 'numeric'
+        });
+
+        const isToday = key === todayKey();
+
+        return `
+            <div class="history-day">
+                <div class="history-date">${dateLabel}${isToday ? ' <span style="background:#e8f5e9;color:#2e7d32;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:600;">TODAY</span>' : ''}</div>
+                <div class="history-meta">${data.foods.length} food${data.foods.length !== 1 ? 's' : ''} &nbsp;·&nbsp; ${data.exercises.length} exercise${data.exercises.length !== 1 ? 's' : ''}</div>
+                <div class="history-stats">
+                    <div class="hist-stat">
+                        <div class="hist-stat-label">Consumed</div>
+                        <div class="hist-stat-value">${consumed}</div>
+                        <div class="hist-stat-label">kcal</div>
+                    </div>
+                    <div class="hist-stat">
+                        <div class="hist-stat-label">Burned</div>
+                        <div class="hist-stat-value">${burned}</div>
+                        <div class="hist-stat-label">kcal</div>
+                    </div>
+                    <div class="hist-stat">
+                        <div class="hist-stat-label">Net</div>
+                        <div class="hist-stat-value">${net}</div>
+                        <div class="hist-stat-label">kcal</div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+// ── Security ───────────────────────────────────────────────────
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
